@@ -6,9 +6,11 @@ interface PlannerConfiguration {
   homeLoc: string;
   timeRange: { start: moment.Moment, end: moment.Moment };
   destList: Array<string>;
-  flightDiff: number;
-  maxStay: number;
-  minStay: number;
+  maxStay: moment.Duration;
+  minStay: moment.Duration;
+  flightDiff: moment.Duration;
+  maxPrice: number;
+  minLength: number;
 }
 
 /**
@@ -22,33 +24,42 @@ class TripNode {
   private parent: TripNode | null; // Previous node
   private children: Array<TripNode>;
 
-  private loc: string; // location
-  private remainingLocs: Array<string>; // where can we go after this?
+  public loc: string; // location
+  public remainingLocs: Array<string>; // where can we go after this?
 
   private arrivalTime: moment.Moment;
   private prevDepartTime:  moment.Moment; // departure of the flight that got here
 
-  private depth: number; // which leg of the trip is this? (first one has depth 0)
+  public depth: number; // which leg of the trip is this? (first one has depth 0)
 
-  private price: number;
+  public price: number;
+  public cumPrice: number;
+
+  public deepLink: string;
 
   constructor(loc: string, remainingLocs: Array<string>) {
     this.loc = loc;
-    this.remainingLocs = remainingLocs;
+    this.remainingLocs = remainingLocs.slice(0); // make a copy
 
     this.parent = null;
     this.children = [];
-    this.arrivalTime = moment(0);
-    this.prevDepartTime = moment(0);
+    this.arrivalTime = moment();
+    this.prevDepartTime = moment();
+    this.depth = 0;
+    this.price = 0;
+    this.cumPrice = 0;
+
+    this.deepLink = "";
   }
 
   public static fromFlightInfo(parent: TripNode, flightInfo: any): TripNode {
     const loc = flightInfo.flyTo;
-    const arrivalTime = moment(flightInfo.aTime);
+    const arrivalTime = moment(flightInfo.aTime*1000);
     const prevDepartTime = moment(flightInfo.dTime);
     const price = flightInfo.price;
+    const deepLink = flightInfo.deep_link;
     
-    let remainingLocs = parent.remainingLocs;
+    let remainingLocs = parent.remainingLocs.slice(0);
     let index = remainingLocs.indexOf(loc);
     if (index === -1) {
       throw new Error(`Invalid location of new node: ${loc}`);
@@ -62,6 +73,8 @@ class TripNode {
     n.parent = parent;
     n.depth = parent.depth + 1;
     n.price = price;
+    n.cumPrice = n.parent.cumPrice + n.price;
+    n.deepLink = deepLink;
 
     return n;
   }
@@ -70,13 +83,13 @@ class TripNode {
   // place are compared for lower price. It is a heuristic used here purely to
   // make the tree search smaller. If the *absolute* lowest price is desired,
   // then this should be set to zero.
-  private tryAddChild(newChild: TripNode, flightDiff: number): number {
+  private tryAddChild(newChild: TripNode, flightDiff: moment.Duration): number {
     let i;
     for (i = 0; i < this.children.length; i++) {
       const c = this.children[i];
       if (c.loc == newChild.loc && c.price > newChild.price) {
-        const timeDiff = c.prevDepartTime.diff(newChild.prevDepartTime);
-        if (timeDiff < flightDiff) {
+        const timeDiff = c.prevDepartTime.diff(newChild.prevDepartTime, "seconds");
+        if (timeDiff < flightDiff.asSeconds()) {
           break;
         }
       }
@@ -87,44 +100,125 @@ class TripNode {
   }
 
   public async searchNext(config: PlannerConfiguration): Promise<Array<TripNode>> {
-    const dateFrom = this.arrivalTime.add(config.minStay, "seconds");
-    const dateTo = moment.min(dateFrom.add(config.maxStay, "seconds"), config.timeRange.end);
-    const flights = await requestFlights({
-      timeRange: { start: dateFrom, end: dateTo }, 
-      startLoc: this.loc,
-      destList: this.remainingLocs,
-    });
+    const dateFrom = this.arrivalTime.add(config.minStay);
+    const dateTo = moment.min(dateFrom.add(config.maxStay), config.timeRange.end);
+    if (dateTo.isBefore(dateFrom)) {
+      return [];
+    }
+
+    let result;
+
+    try {
+      result = await requestFlights({
+        timeRange: { start: dateFrom, end: dateTo }, 
+        startLoc: this.loc,
+        destList: this.remainingLocs,
+      });
+
+    } catch (e) {
+      console.warn(e);
+      return [];
+    }
+
+    const flights = result.data;
 
     for (const flight of flights) {
       const newNode = TripNode.fromFlightInfo(this, flight);
-      this.tryAddChild(newNode, config.flightDiff);
+      if (newNode.cumPrice < config.maxPrice) {
+        this.tryAddChild(newNode, config.flightDiff);
+      } else { console.log("Pruned a fat price"); }
     }
 
     return this.children;
   }
 
+  public buildChain(): Array<TripNode> {
+    const result: Array<TripNode> = [];
+    let conductor: TripNode | null = this;
+    while (conductor !== null) {
+      result.unshift(conductor);
+      conductor = conductor.parent;
+    }
+
+    return result;
+  }
+
 }
+
+type PlannerResultCallback = (nodes: Array<TripNode>, price: number) => void;
 
 class Planner {
   private config: PlannerConfiguration;
   private startNode: TripNode;
   private endNodes: Array<TripNode>;
+  private resultCallbacks: Array<PlannerResultCallback>;
 
   constructor(config: PlannerConfiguration) {
     this.config = config;
 
-    const fullDestList = this.config.destList.concat(this.config.homeLoc);
-    this.startNode = new TripNode(this.config.homeLoc, fullDestList);
+    this.startNode = new TripNode(this.config.homeLoc, this.config.destList);
 
     this.endNodes = [];
+    this.resultCallbacks = [];
   }
 
   public async search() {
     const frontier: Array<TripNode> = [];
     frontier.push(this.startNode);
     while (frontier.length > 0) {
-      const head = frontier.pop();
-      const children = await head.searchNext();
+      frontier.sort((x, y) => y.depth - x.depth || x.cumPrice - y.cumPrice);
+      const heads = frontier.splice(0, 100);
+
+      const childrenList = await Promise.all(heads.map( h => h.searchNext(this.config) ));
+
+      //console.log(`popped node of depth ${head.depth}, found ${children.length} children`);
+      //console.log(`children locations: ${head.remainingLocs}`);
+
+      for (const children of childrenList) {
+        for (const child of children) {
+          if (child.loc == this.config.homeLoc) {
+            this.endNodes.unshift(child);
+            this.buildAndCallResult(child);
+          } else {
+            if (child.depth + 1 >= this.config.minLength) {
+              child.remainingLocs.push(this.config.homeLoc);
+            }
+            frontier.unshift(child);
+          }
+        }
+      }
     }
   }
+
+  private buildAndCallResult(node: TripNode) {
+    const result = node.buildChain();
+    for (const cb of this.resultCallbacks) {
+      cb(result, node.cumPrice);
+    }
+  }
+
+  public onresult(cb: PlannerResultCallback) {
+    this.resultCallbacks.push(cb);
+  }
 }
+
+const pl = new Planner({
+  homeLoc: "LAX",
+  destList: ["PRG", "AMS", "LPL", "DUB", "LGW", "FCO", "CDG", "BUD"],
+  timeRange: { start: moment().add(50, 'days'), end: moment().add(80, 'days') },
+  maxStay: moment.duration(7, "days"),
+  minStay: moment.duration(2, "days"),
+  flightDiff: moment.duration(30, "hours"),
+  maxPrice: 1900,
+  minLength: 4,
+});
+
+pl.onresult( (chain, price) => {
+  console.log(price);
+  for (const node of chain) {
+    console.log(node.loc, node.price, node.cumPrice);
+  }
+  console.log("-----");
+});
+
+pl.search();
