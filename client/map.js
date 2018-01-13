@@ -44,8 +44,12 @@ function searchCallback(results, status){
   }
 }
 
+var bounds = null;
 function createMarkers(place){
-  var bounds = new google.maps.LatLngBounds();
+  if (bounds == null) {
+    bounds = new google.maps.LatLngBounds();
+  }
+
   var placesList = document.getElementById('places');
 
   var image = {
