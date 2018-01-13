@@ -4,7 +4,7 @@ function initCalendar()
 	flatpickr(datepick, {
 		mode:"range",
 		minDate: "today",
-		dateFormat: "U",
+		dateFormat: "Y-m-d",
 		onClose: function(selectedDates)
 		{
 			var start = selectedDates[0].getTime()/1000;
