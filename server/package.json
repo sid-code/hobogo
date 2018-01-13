@@ -1,0 +1,23 @@
+{
+  "name": "fpserver",
+  "version": "1.0.0",
+  "description": "this is the server for flight planner thingy",
+  "main": "./built/index.js",
+  "scripts": {
+    "test": "nope"
+  },
+  "repository": {
+    "type": "git",
+    "url": "none"
+  },
+  "keywords": [
+    "uh"
+  ],
+  "author": "me",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node-fetch": "^1.6.7",
+    "moment": "^2.20.1",
+    "node-fetch": "^1.7.3"
+  }
+}

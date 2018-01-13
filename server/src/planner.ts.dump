@@ -1,0 +1,33 @@
+
+import * as moment from "moment";
+import { requestFlights } from "./skypicker";
+
+
+/**
+ * Represents a leg of the trip. Stores information about the flight that
+ * landed here.
+ *
+ * For example, a node could represent the visit to Prague. It would store
+ * information about the flight that landed in Prague.
+ */
+class TripNode {
+  parent: TripNode; // Previous node
+  children: Array<TripNode>;
+   
+  loc: string; // location
+  remainingLocs: Array<string>; // where can we go after this?
+  
+  arrivalTime: moment.Moment;
+  prevDepartTime:  moment.Moment; // departure of the flight that got here
+
+  depth: number; // which leg of the trip is this? (first one has depth 0)
+
+  price: number;
+}
+
+const params = {
+  timeRange: { start: moment(), end: moment().add(1, "days") },
+  startLoc: "LAX",
+  destList: ["LGW", "PRG", "AMS"]
+}
+requestFlights(params).then(resp => console.log(resp) );
