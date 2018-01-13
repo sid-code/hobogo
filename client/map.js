@@ -1,5 +1,7 @@
 var map;
 var service;
+var markers = [];
+var curSearchTerm;
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
@@ -7,7 +9,6 @@ function initMap() {
 	zoom: 15
     });
     service = new google.maps.places.PlacesService(map);
-    addAirport('fco');
 }
 
 function addAirport(airportCode) {
@@ -15,13 +16,30 @@ function addAirport(airportCode) {
 	query: airportCode,
 	type: 'airport'
     };
+    curSearchTerm = airportCode;
+    console.log("Adding airport:");
+    console.log(request);
     service.textSearch(request, searchCallback);
+}
+
+function removeAirport(index) {
+    markers[index].setMap(null);
+    markers.splice(index,1);
+    console.log(markers);
+}
+
+function getMarkerIndex(airportCode) {
+    for(i = 0;i < markers.length;i++){
+	if(markers[i].searchTerm == airportCode){
+	    return i;
+	}
+    }
+    return -1;
 }
 
 function searchCallback(results, status){
     if (status == google.maps.places.PlacesServiceStatus.OK) {
 	//Assume first result, using airport code + type airport should work lol
-	console.log(results[0].geometry);
 	createMarkers(results[0]);
     }
 }
@@ -44,7 +62,10 @@ function createMarkers(place){
 	title: place.name,
 	position: place.geometry.location
     });
+    marker.searchTerm = curSearchTerm;
 
+    markers.push(marker);
+    console.log(markers);
     bounds.extend(place.geometry.location);
     map.fitBounds(bounds);
     map.setZoom(10);
