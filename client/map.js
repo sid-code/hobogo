@@ -68,4 +68,5 @@ function createMarkers(place){
   console.log(markers);
   bounds.extend(place.geometry.location);
   map.fitBounds(bounds);
+}
 
