@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/css/selectize.min.css">
+	<style>
+#map {
+    height: 400px;
+    width: 100%;
+}
+	</style>
+    </head>
+    <body>
+	<div id="map"></div>
+	<section class="demo" id="demo-single-item-select">
+	    <div class="sandbox">
+		<select id="select-city" class="demo-default" placeholder="Select a city">
+		    <option value="">Select a city...</option>
+		</select>
+	    </div>
+	</section>
+	<script
+	     src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous"></script>
+	<script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDik-pcFaYirFSFgO4PkmXvd_mX4QdKoWA&libraries=places&callback=initMap">
+	</script>
+	<script
+      src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/js/standalone/selectize.min.js">
+	</script>
+	<script
+      src="map.js">
+	</script>
+	<script
+      src="selector.js">
+	</script>
+    </body>
+</html>
