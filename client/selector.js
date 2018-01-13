@@ -1,6 +1,8 @@
 var origin = [];
 var destinations = [];
 
+var url = 'https://cors-anywhere.herokuapp.com/https://api.skypicker.com/locations';
+
 $('#select-city, #select-origin').selectize({
   valueField: 'name',
   labelField: 'name',
@@ -28,7 +30,7 @@ $('#select-city, #select-origin').selectize({
   load: function(query, callback) {
     if (!query.length) return callback();
     $.ajax({
-      url: 'https://api.skypicker.com/locations',
+      url: url,
       type: 'GET',
       dataType: 'json',
       data: {
@@ -41,12 +43,12 @@ $('#select-city, #select-origin').selectize({
 	callback();
       },
       success: function(res) {
-	console.log(res.locations)
+	console.log(res.locations);
 	callback(res.locations);
       }
     });
     $.ajax({
-      url: 'https://api.skypicker.com/locations',
+      url: url,
       type: 'GET',
       dataType: 'json',
       data: {
