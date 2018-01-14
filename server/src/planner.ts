@@ -126,7 +126,7 @@ export class TripNode {
       const newNode = TripNode.fromFlightInfo(this, flight);
       if (newNode.cumPrice < config.maxPrice) {
         this.tryAddChild(newNode, config.flightDiff);
-      } else { console.log("Pruned a fat price"); }
+      }
     }
 
     return this.children;

@@ -13,11 +13,12 @@ const pl = new Planner({
 
   flightDiff: moment.duration(30, "hours"),
 
-  maxPrice: 1500,
+  maxPrice: 1000,
   minLength: 5,
 });
 
 pl.onresult( (chain: Array<TripNode>, price: number) => {
+  console.log(`Total price: ${price}`);
   for (const node of chain) {
     console.log(node.loc, node.price, node.cumPrice);
   }
@@ -25,4 +26,9 @@ pl.onresult( (chain: Array<TripNode>, price: number) => {
   console.log("------");
 });
 
+console.log("Beginning search.");
 pl.search();
+
+process.on("SIGINT", function() {
+  console.log("Caught interrupt...");
+});
