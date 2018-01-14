@@ -49,7 +49,7 @@ function chainToEl(result) {
   }
 
   var price = document.createElement("span");
-  price.innerText = "$" + chain.price;
+  price.innerText = "$" + result.price;
   el.appendChild(price);
 
   el.addEventListener("mouseover", function() {
