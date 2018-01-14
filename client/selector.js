@@ -17,9 +17,10 @@ var options = {
 var fuse = new Fuse(list, options); // "list" is the item array
 
 function doit(sel, origin) {
-  $(sel).selectize({
+  var $sel = $(sel).selectize({
     valueField: 'name',
     //maxItems: maxItems,
+    closeAfterSelect: true,
     labelField: 'name',
     searchField: ['name','iata', 'city'],
     options: [],
@@ -44,7 +45,7 @@ function doit(sel, origin) {
     },
     load: function(query, callback) {
       if (!query.length) return callback();
-      callback(fuse.search(query))
+      callback(fuse.search(query));
     }
   });
 }
