@@ -4,8 +4,8 @@ var markers = [];
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat: -33.866, lng: 151.196},
-    zoom: 15
+    center: {lat: 40.819, lng: -100.781},
+    zoom: 4
   });
   service = new google.maps.places.PlacesService(map);
 }
