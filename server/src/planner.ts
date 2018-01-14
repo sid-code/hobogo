@@ -2,7 +2,7 @@
 import * as moment from "moment";
 import { requestFlights } from "./skypicker";
 
-interface PlannerConfiguration {
+export interface PlannerConfiguration {
   homeLoc: string;
   timeRange: { start: moment.Moment, end: moment.Moment };
   destList: Array<string>;
@@ -143,14 +143,22 @@ class TripNode {
     return result;
   }
 
+  public toSimpleObject(): any {
+    const result: any = {};
+    result.arrivalTime = this.arrivalTime.unix();
+    result.prevDepartTime = this.prevDepartTime.unix();
+    result.price = this.price;
+    result.deepLink = this.deepLink;
+
+    return result;
+  }
 }
 
 type PlannerResultCallback = (nodes: Array<TripNode>, price: number) => void;
 
-class Planner {
+export class Planner {
   private config: PlannerConfiguration;
   private startNode: TripNode;
-  private endNodes: Array<TripNode>;
   private resultCallbacks: Array<PlannerResultCallback>;
 
   constructor(config: PlannerConfiguration) {
@@ -158,7 +166,6 @@ class Planner {
 
     this.startNode = new TripNode(this.config.homeLoc, this.config.destList);
 
-    this.endNodes = [];
     this.resultCallbacks = [];
   }
 
@@ -177,7 +184,6 @@ class Planner {
       for (const children of childrenList) {
         for (const child of children) {
           if (child.loc == this.config.homeLoc) {
-            this.endNodes.unshift(child);
             this.buildAndCallResult(child);
           } else {
             if (child.depth + 1 >= this.config.minLength) {
@@ -201,24 +207,3 @@ class Planner {
     this.resultCallbacks.push(cb);
   }
 }
-
-const pl = new Planner({
-  homeLoc: "LAX",
-  destList: ["PRG", "AMS", "LPL", "DUB", "LGW", "FCO", "CDG", "BUD"],
-  timeRange: { start: moment().add(50, 'days'), end: moment().add(80, 'days') },
-  maxStay: moment.duration(7, "days"),
-  minStay: moment.duration(2, "days"),
-  flightDiff: moment.duration(30, "hours"),
-  maxPrice: 1900,
-  minLength: 4,
-});
-
-pl.onresult( (chain, price) => {
-  console.log(price);
-  for (const node of chain) {
-    console.log(node.loc, node.price, node.cumPrice);
-  }
-  console.log("-----");
-});
-
-pl.search();
