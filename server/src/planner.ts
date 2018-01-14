@@ -149,6 +149,7 @@ class TripNode {
     result.prevDepartTime = this.prevDepartTime.unix();
     result.price = this.price;
     result.deepLink = this.deepLink;
+    result.loc = this.loc;
 
     return result;
   }

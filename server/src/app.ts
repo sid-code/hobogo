@@ -45,7 +45,7 @@ export default class Server {
 
       const plannerConfig: PlannerConfiguration = {
         homeLoc: body.homeLoc,
-        timeRange: { start: body.timeRange.start, end: body.timeRange.end },
+        timeRange: { start: moment(body.timeRange.start*1000), end: moment(body.timeRange.end*1000) },
         destList: body.destList,
         maxStay: moment.duration(body.maxStay, "days"),
         minStay: moment.duration(body.minStay, "days"),
@@ -53,6 +53,7 @@ export default class Server {
         maxPrice: body.maxPrice,
         minLength: body.minLength,
       };
+      console.log(plannerConfig);
 
       const token = this.sm.newSearch(plannerConfig);
 
@@ -69,6 +70,12 @@ export default class Server {
     wss.on("connection", (ws: WebSocket) => {
       ws.on("message", (message: string) => {
         console.log(`received ${message}`);
+        try {
+          const parsedMessage = JSON.parse(message);
+          this.sm.handleMessage(ws, parsedMessage);
+        } catch (e) {
+          // TODO
+        }
       });
     });
   }

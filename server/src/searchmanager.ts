@@ -27,7 +27,11 @@ class Search {
     this.planner = new Planner(config);
     this.token = crypto.randomBytes(32).toString("hex");
 
+    this.backLog = [];
+    this.subscribers = [];
+
     this.planner.onresult(chain => {
+      console.log("found one!!!");
       let last = null;
       const simpleNodeObjects: Array<any> = [];
       for (const node of chain) {
@@ -44,6 +48,8 @@ class Search {
         chain: simpleNodeObjects,
       });
     });
+
+    this.planner.search();
   }
 
   private handleNewResult(result: any) {
@@ -110,6 +116,10 @@ export class SearchManager {
 
       ws.on("close", () => {
         search.removeSubscriber(ws);
+      });
+
+      ws.on("error", () => {
+        ws.close();
       });
 
     }

@@ -5,6 +5,8 @@ import Server from "./app"
 
 import { normalizePort } from "./utils";
 
+import * as longjohn from "longjohn";
+
 const app = new Server();
 const exp = app.express;
 
