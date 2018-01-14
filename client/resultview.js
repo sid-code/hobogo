@@ -57,7 +57,7 @@ function chainToEl(result) {
   });
 
   el.addEventListener("mouseout", function() {
-    drawRoute(["lol"]);
+    flightPath.setMap(null);
   });
 
   return el;
