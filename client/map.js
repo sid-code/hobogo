@@ -33,6 +33,14 @@ function removeAirport(airportCode) {
   }
 }
 
+function findPin(code){
+  for(i = 0;i < markers.length;i++){
+    if(markers[i].code == code){
+      return i;
+    }
+  }
+}
+
 var flightPath;
 function drawRoute(airportCodeList){
   if(flightPath){
@@ -41,10 +49,25 @@ function drawRoute(airportCodeList){
   var flightPlanCoordinates = [];
   var done = 0;
   for(i = 0;i < airportCodeList.length;i++){
-    var request = { 
-      query: airportCodeList[i],
-      type: 'airport'
-    };
+    var index = findPin(airportCodeList[i]);
+    console.log(markers[index].getPosition());
+    var latt = markers[index].getPosition().lat();
+    var lngg = markers[index].getPosition().lng();
+    flightPlanCoordinates.push({lat: latt, lng:lngg});
+  }
+  flightPlanCoordinates.push(flightPlanCoordinates[0]);
+  flightPath = new google.maps.Polyline({
+    path: flightPlanCoordinates,
+    geodesic: true,
+    strokeColor: '#33BBCC',
+    strokeOpacity: 1.0,
+    strokeWeight: 2
+  });
+  flightPath.setMap(map);
+}
+
+/*
+ *
     service.textSearch(request, function(results, status){
       done++;
       if (status == google.maps.places.PlacesServiceStatus.OK) {
@@ -67,9 +90,7 @@ function drawRoute(airportCodeList){
 	flightPath.setMap(map);
       }
     });
-  }
-
-}
+    */
 
 function getPlace(airportCode) {
   var request = {
