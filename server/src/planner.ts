@@ -20,7 +20,7 @@ export interface PlannerConfiguration {
  * For example, a node could represent the visit to Prague. It would store
  * information about the flight that landed in Prague.
  */
-class TripNode {
+export class TripNode {
   private parent: TripNode | null; // Previous node
   private children: Array<TripNode>;
 
