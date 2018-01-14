@@ -33,6 +33,44 @@ function removeAirport(airportCode) {
   }
 }
 
+var flightPath;
+function drawRoute(airportCodeList){
+  if(flightPath){
+    flightPath.setMap(null);
+  }
+  var flightPlanCoordinates = [];
+  var done = 0;
+  for(i = 0;i < airportCodeList.length;i++){
+    var request = { 
+      query: airportCodeList[i],
+      type: 'airport'
+    };
+    service.textSearch(request, function(results, status){
+      done++;
+      if (status == google.maps.places.PlacesServiceStatus.OK) {
+	var latt = results[0].geometry.location.lat();
+	var lngg = results[0].geometry.location.lng();
+	flightPlanCoordinates.push({lat: latt, lng:lngg});
+      }
+
+      if (done == airportCodeList.length) {
+	flightPlanCoordinates.push(flightPlanCoordinates[0]);
+	console.log(flightPlanCoordinates);
+
+	flightPath = new google.maps.Polyline({
+	  path: flightPlanCoordinates,
+	  geodesic: true,
+	  strokeColor: '#33BBCC',
+	  strokeOpacity: 1.0,
+	  strokeWeight: 2
+	});
+	flightPath.setMap(map);
+      }
+    });
+  }
+
+}
+
 function getPlace(airportCode) {
   var request = {
     query: airportCode,
