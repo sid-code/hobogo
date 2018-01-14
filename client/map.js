@@ -1,7 +1,6 @@
 var map;
 var service;
 var markers = [];
-var curSearchTerm;
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
@@ -16,35 +15,34 @@ function addAirport(airportCode) {
     query: airportCode,
     type: 'airport'
   };
-  curSearchTerm = airportCode;
-  console.log("Adding airport:");
-  console.log(request);
+  service.textSearch(request, function(results, status){
+    if (status == google.maps.places.PlacesServiceStatus.OK) {
+      createMarkers(results[0], airportCode);   
+    }
+  });
+}
+
+function removeAirport(airportCode) {
+  for(i = 0;i < markers.length;i++){
+    if(markers[i].code == airportCode){
+      var dead = markers.splice(i, 1);
+      console.log(dead);
+      dead[0].setMap(null);
+      dead[0] = null;
+    }
+  }
+}
+
+function getPlace(airportCode) {
+  var request = {
+    query: airportCode,
+    type: 'airport'
+  };
   service.textSearch(request, searchCallback);
 }
 
-function removeAirport(index) {
-  markers[index].setMap(null);
-  markers.splice(index,1);
-}
-
-function getMarkerIndex(airportCode) {
-  for(i = 0;i < markers.length;i++){
-    if(markers[i].searchTerm == airportCode){
-      return i;
-    }
-  }
-  return -1;
-}
-
-function searchCallback(results, status){
-  if (status == google.maps.places.PlacesServiceStatus.OK) {
-    //Assume first result, using airport code + type airport should work lol
-    createMarkers(results[0]);
-  }
-}
-
 var bounds = null;
-function createMarkers(place){
+function createMarkers(place, airportCode){
   if (bounds == null) {
     bounds = new google.maps.LatLngBounds();
   }
@@ -63,12 +61,12 @@ function createMarkers(place){
     map: map,
     icon: image,
     title: place.name,
-    position: place.geometry.location
+    position: place.geometry.location,
+    code: airportCode
   });
-  marker.searchTerm = curSearchTerm;
+  console.log(marker);
 
   markers.push(marker);
   bounds.extend(place.geometry.location);
   map.fitBounds(bounds);
 }
-

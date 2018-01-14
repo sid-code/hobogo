@@ -34,14 +34,14 @@ function doit(sel, origin) {
       }
     },
     onItemAdd: function(value, $item) {
-      codeAddRem(value, origin);
-      if(getMarkerIndex(value) == -1){
-	addAirport(value);
-      }
+      var iata = fuse.search(value)[0].iata;
+      codeAddRem(iata, origin);
+      addAirport(iata);
     },
     onItemRemove: function(value) {
-      codeAddRem(value, origin);
-      removeAirport(getMarkerIndex(value));
+      var iata = fuse.search(value)[0].iata;
+      codeAddRem(iata, origin);
+      removeAirport(iata);
     },
     load: function(query, callback) {
       if (!query.length) return callback();
@@ -62,16 +62,13 @@ function getOption(item, escape){
 }
 
 //Accepts search value, finds airport code and properly updates originCode/destinationCodes
-function codeAddRem(value, origin){
-  console.log(value);
-  console.log(fuse.search(value));
-  var code = fuse.search(value)[0].iata; //This should avoided
+function codeAddRem(iata, origin){
   if(origin){
     //Set origin
-    originCode = code;
+    originCode = iata;
   } else {
     //Do destination add to destCodes
-    destinationCodeAddRem(code);
+    destinationCodeAddRem(iata);
   }
 }
 
