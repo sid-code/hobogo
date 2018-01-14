@@ -25,7 +25,6 @@ function addAirport(airportCode) {
 function removeAirport(index) {
   markers[index].setMap(null);
   markers.splice(index,1);
-  console.log(markers);
 }
 
 function getMarkerIndex(airportCode) {
@@ -69,7 +68,6 @@ function createMarkers(place){
   marker.searchTerm = curSearchTerm;
 
   markers.push(marker);
-  console.log(markers);
   bounds.extend(place.geometry.location);
   map.fitBounds(bounds);
 }

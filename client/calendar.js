@@ -1,3 +1,4 @@
+var timeRange = {start: null, end: null};
 function initCalendar()
 {
   var datepick = document.getElementById("datepick");
@@ -9,8 +10,12 @@ function initCalendar()
     {
       var start = selectedDates[0].getTime()/1000;
       var end = selectedDates[1].getTime()/1000;
-      console.log(start);
-      console.log(end);	
+      timeRange.start = start;
+      timeRange.end = end;
     }	
   });
+}
+
+function getTimeRange(){
+  return timeRange;
 }
